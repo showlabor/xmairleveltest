@@ -22,7 +22,8 @@ Nevertheless, if this program doesn't work please try with a liblo from git:
 
 	      https://github.com/radarsat1/liblo
 
-Please, adjust the location of liblo in the Makefile and in test_xrm32level.sh.
+Please, adjust the location of liblo in the Makefile and in test_xrm32level.sh. The Makefile
+expects liblo to be installed in $HOME/local.
 (Forgive my laziness but this program is really to small to turn it into a fullfledged
 automake or CMake thing.)
 
@@ -32,4 +33,6 @@ After making the above adjustments run 'make' and you're done.
 
 ## Run ##
 
-Run ./test_xrm32level.sh in the source directory.
+In the source directory, either run ./xmairleveltest directly if you use a system liblo
+or ./xmairleveltest_preload.sh if you use a custom liblo. Again: Adjust the path to your
+liblo as needed.
