@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
   tester.run_tests(mixer, num_steps, true);
 
   // // Count distinct dB Strings.
-  std::cout << "Number of distinct node dB values: " << tester.count_node_db(mixer) << std::endl;
+  tester.count_node_db(mixer);
 
   std::cout << "\nThe expected result currently is that we get two dB mismatches for index 765 and 769 respectively."
 	    << "\nThe desktop apps seem to give the same dB values for those levels." << std::endl;

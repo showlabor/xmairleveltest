@@ -143,20 +143,23 @@ void XMAirLevelTester::run_tests(std::shared_ptr<lo::Address> mixer, uint num_st
 
 int XMAirLevelTester::count_node_db(std::shared_ptr<lo::Address> mixer_addr)
 {
+  std::Cout << "Counting distinct dB (node string )values!";
   std::string last_db("");
   int count = 0;
   for (int i = 0; i < 1024; ++i) {
-    float level = i * 1.0f/(1024 - 1);
-    mixer_addr->send_from(_lo_server, _fader_level_path.c_str(), "f", level);
+    std::cout << ".";
+    std::cout.flush();
+    float flevel = i * 1.0f/(1024 - 1);
+    set_fader_float(mixer_addr, flevel);
     // Query dB string
-    auto future_fader_db = _promise_fader_db.get_future();
-    mixer_addr->send_from(_lo_server,"/node", "s", _fader_db_node_msg.c_str());
-    auto node_db = future_fader_db.get();
+    auto node_db = query_fader_db(mixer_addr);
     if (node_db != last_db) {
       ++count;
       last_db = node_db;
     }
   }
+  std::cout << std::endl;
+  std::cout << "Counted " << count << " distinct dB values." << std::endl;
   return count;
 }
 
@@ -169,13 +172,11 @@ int XMAirLevelTester::check_fader_level(std::shared_ptr<lo::Address> mixer_addr,
   // Send a set message to the console
   set_fader_float(mixer_addr, flevel);
 
-  // Now ask for the value
+  // Now ask for the flaot value
   auto actual_fader_level = query_fader_float(mixer_addr);
 
   // Query dB string
-  auto future_fader_db = _promise_fader_db.get_future();
-  mixer_addr->send_from(_lo_server,"/node", "s", _fader_db_node_msg.c_str());
-  auto node_db = future_fader_db.get();
+  auto node_db = query_fader_db(mixer_addr);
 
   // Diagnostics
   if (log) {
