@@ -143,7 +143,7 @@ void XMAirLevelTester::run_tests(std::shared_ptr<lo::Address> mixer, uint num_st
 
 int XMAirLevelTester::count_node_db(std::shared_ptr<lo::Address> mixer_addr)
 {
-  std::Cout << "Counting distinct dB (node string )values!";
+  std::cout << "Counting distinct dB (node string )values!";
   std::string last_db("");
   int count = 0;
   for (int i = 0; i < 1024; ++i) {
