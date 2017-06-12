@@ -20,20 +20,24 @@
 
 #include <cmath>
 #include <iostream>
+#include <memory>
 #include <vector>
 
 #include "xrm32level.hpp"
 #include "xmairleveltester.h"
 
 using namespace std::literals;
-const uint CHANNEL = 12;
+const uint CHANNEL = 13;
 
 int main(int argc, char* argv[])
 {
   std::cout << "Test the Xrm32Level implementation!" << std::endl;
 
+  // Search for mixer
   XMAirLevelTester tester(CHANNEL);
-  std::shared_ptr<lo::Address> mixer = tester.find_mixer();
+  std::unique_ptr<lo::Address> mixer{tester.find_mixer()};
+
+  // mixer valid?
   if (mixer == nullptr) {
     std::cout << "No mixer found!" << std::endl;
     tester.stop();
@@ -41,13 +45,13 @@ int main(int argc, char* argv[])
   }
 
   uint num_steps = 1024*4;
-  tester.run_tests(mixer, num_steps, true);
+  tester.run_tests(*(mixer.get()), num_steps, true);
 
   std::cout << "\nThe expected result currently is that we get two dB mismatches for index 765 and 769 respectively."
   	    << "\nThe desktop apps seem to give the same dB values for those levels.\n" << std::endl;
 
-  // // Count distinct dB Strings.
-  tester.count_node_db(mixer);
+  // Count distinct dB Strings.
+  tester.count_node_db(*(mixer.get()));
   std::cout << "\nExpected number of distinct values is 658.\n" << std::endl;
 
   // Check Patrick-Gilles Maillot's rounding formula

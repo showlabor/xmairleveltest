@@ -89,7 +89,7 @@ void XMAirLevelTester::stop()
   _lo_server.stop();
 }
 
-std::shared_ptr<lo::Address> XMAirLevelTester::find_mixer()
+lo::Address* XMAirLevelTester::find_mixer()
 {
   // We get a future. The promise will be set by the _fader_handler.
   auto future_mixer_addr = _promise_mixer_addr.get_future();
@@ -106,13 +106,13 @@ std::shared_ptr<lo::Address> XMAirLevelTester::find_mixer()
    return mixer_ptr;
 }
 
-void XMAirLevelTester::run_tests(std::shared_ptr<lo::Address> mixer, uint num_steps, bool log = true)
+void XMAirLevelTester::run_tests(const lo::Address& mixer, uint num_steps, bool log = true)
 {
   uint mismatch_counter_float = 0;
   uint mismatch_counter_db =0;
 
   std::vector<int> mismatch_indices;
-  std::cout << "Running tests on mixer at " <<  mixer->url()
+  std::cout << "Running tests on mixer at " <<  mixer.url()
 	    << " on channel " << _channel << "." << std::endl;
 
   for (int i = 0; i < num_steps; ++i) {
@@ -141,7 +141,7 @@ void XMAirLevelTester::run_tests(std::shared_ptr<lo::Address> mixer, uint num_st
 }
 
 
-int XMAirLevelTester::count_node_db(std::shared_ptr<lo::Address> mixer_addr)
+int XMAirLevelTester::count_node_db(const lo::Address& mixer_addr)
 {
   std::cout << "Counting distinct dB (node string )values!";
   std::string last_db("");
@@ -164,7 +164,7 @@ int XMAirLevelTester::count_node_db(std::shared_ptr<lo::Address> mixer_addr)
 }
 
 
-int XMAirLevelTester::check_fader_level(std::shared_ptr<lo::Address> mixer_addr, float flevel, bool log)
+int XMAirLevelTester::check_fader_level(const lo::Address& mixer_addr, float flevel, bool log)
 {
   int err = 0;
   Xrm32::Level<1024> level; // Our Level implementation
@@ -201,32 +201,32 @@ int XMAirLevelTester::check_fader_level(std::shared_ptr<lo::Address> mixer_addr,
   return err;
 }
 
-void XMAirLevelTester::set_fader_float(std::shared_ptr<lo::Address> mixer_addr, float flevel)
+void XMAirLevelTester::set_fader_float(const lo::Address& mixer_addr, float flevel)
 {
-  mixer_addr->send_from(_lo_server, _fader_level_path.c_str(), "f", flevel);
+  mixer_addr.send_from(_lo_server, _fader_level_path.c_str(), "f", flevel);
   std::this_thread::sleep_for(DELAY); // Make sure the mixer isn't overrun by requests
 }
 
-float XMAirLevelTester::query_fader_float(std::shared_ptr<lo::Address> mixer_addr)
+float XMAirLevelTester::query_fader_float(const lo::Address& mixer_addr)
 {
   auto future_fader_level = _promise_fader_level.get_future();
-  mixer_addr->send_from(_lo_server,_fader_level_path.c_str(), "", nullptr);
+  mixer_addr.send_from(_lo_server,_fader_level_path.c_str(), "", nullptr);
   auto status = future_fader_level.wait_for(std::chrono::seconds(1));
   float retval = status == std::future_status::ready ? future_fader_level.get() : -1.0f;
 
   return retval;
 }
 
-void XMAirLevelTester::set_fader_db(std::shared_ptr<lo::Address> mixer_addr, std::string db)
+void XMAirLevelTester::set_fader_db(const lo::Address& mixer_addr, std::string db)
 {
-  mixer_addr->send_from(_lo_server,  _fader_level_path.c_str(), "s", db.c_str());
+  mixer_addr.send_from(_lo_server,  _fader_level_path.c_str(), "s", db.c_str());
   std::this_thread::sleep_for(DELAY); // Make sure the mixer isn't overrun by requests
 }
 
-std::string XMAirLevelTester::query_fader_db(std::shared_ptr<lo::Address> mixer_addr)
+std::string XMAirLevelTester::query_fader_db(const lo::Address& mixer_addr)
 {
   auto future_fader_db = _promise_fader_db.get_future();
-  mixer_addr->send_from(_lo_server,"/node", "s", _fader_db_node_msg.c_str());
+  mixer_addr.send_from(_lo_server,"/node", "s", _fader_db_node_msg.c_str());
   auto status = future_fader_db.wait_for(std::chrono::seconds(1));
   std::string retval = status == std::future_status::ready ? future_fader_db.get() : "TIMEOUT";
 
@@ -281,13 +281,13 @@ int XMAirLevelTester::_info_handler(const char *path, const lo::Message &msg)
 
   // In case this method is called repeatedly
   // we need another promise:
-  std::promise<std::shared_ptr<lo::Address>> promise_tmp;
+  std::promise<lo::Address*> promise_tmp;
   std::swap(promise_tmp, _promise_mixer_addr);
 
   // Somehow we can't use a lo::Address directly as a promise value.
   // Work aroudn with a shared_ptr.
   //TODO: Find out why?
-  auto mixer_ptr = std::make_shared<lo::Address>(msg.source().url());
+  auto mixer_ptr = new lo::Address(msg.source().url());
   promise_tmp.set_value(mixer_ptr);
 
   return 0;
